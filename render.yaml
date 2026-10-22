@@ -1,0 +1,43 @@
+# Render Blueprint, FREE TIER ONLY
+# Replace "yourname" everywhere with your own name (lowercase, no spaces), e.g. sitecheck-backend-aisyah.
+# Render URLs must be unique, so a shared name like "sitecheck-backend" gets random characters added.
+
+databases:
+  - name: sitecheck-db-pn
+    databaseName: sitecheck
+    user: sitecheck
+    plan: free
+    region: singapore
+
+services:
+  # FastAPI backend, built from backend/Dockerfile
+  - type: web
+    name: sitecheck-backend-pn
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sitecheck-db-pn
+          property: connectionString    # internal URL, never pasted by hand
+      - key: CLIENT_URL
+        value: https://sitecheck-frontend-pn.onrender.com #make sure to replace "yourname" with your own name
+
+  # React frontend: Render runs the build and serves dist/ (static sites are free)
+  - type: web
+    name: project-pn
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://sitecheck-backend-pn.onrender.com #make sure to replace "yourname" with your own name
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
